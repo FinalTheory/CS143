@@ -1,7 +1,11 @@
+.idea/
+build/
+grading/
 # Compiled Object files
 *.slo
 *.lo
 *.o
+*.s
 *.obj
 
 # Precompiled Headers
