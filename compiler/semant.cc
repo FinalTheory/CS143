@@ -579,9 +579,13 @@ void cond_class::type_check() {
   }
   auto T0 = this->then_exp->get_type();
   auto T1 = this->else_exp->get_type();
-  if (T0 == SELF_TYPE) { T0 = Current_Class->name; }
-  if (T1 == SELF_TYPE) { T1 = Current_Class->name; }
-  this->type = classtable->LCA(T0, T1);
+  if (T0 == T1) {
+    this->type = T0;
+  } else {
+    if (T0 == SELF_TYPE) { T0 = Current_Class->name; }
+    if (T1 == SELF_TYPE) { T1 = Current_Class->name; }
+    this->type = classtable->LCA(T0, T1);
+  }
 }
 
 void loop_class::type_check() {

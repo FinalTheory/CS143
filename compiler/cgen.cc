@@ -45,6 +45,8 @@ extern void emit_string_constant(ostream& str, char* s);
 
 extern int cgen_debug;
 
+extern char* curr_filename;
+
 //
 // Three symbols from the semantic analyzer (semant.cc) are used.
 // If e : No_type, then no code is generated for e.
@@ -1275,7 +1277,7 @@ dispatch_impl(Expression expr,
   // Evaluate the object and save into $a0
   expr->code(s);
   emit_bne(ACC, ZERO, label, s);
-  emit_load_string(ACC, stringtable.lookup(0), s);
+  emit_load_string(ACC, stringtable.lookup_string(curr_filename), s);
   emit_load_imm(T1, 1, s);
   emit_jal(DISP_ABORT, s);
 
@@ -1405,7 +1407,7 @@ void typcase_class::code(ostream& s) {
   // Now $a0 holds the evaluated expr
   // We should check if it is void (NULL)
   emit_bne(ACC, ZERO, labels[0], s);
-  emit_load_string(ACC, stringtable.lookup(0), s);
+  emit_load_string(ACC, stringtable.lookup_string(curr_filename), s);
   emit_load_imm(T1, 1, s);
   emit_jal(CASE_ABORT2, s);
   for (auto i = 0; i < patterns.size(); i++) {

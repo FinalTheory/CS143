@@ -63,11 +63,15 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
+  std::string out_filename;
   if (!filename && optind < argc) {   // no -o option
     char* dot = strrchr(argv[optind], '.');
     if (dot) { *dot = '\0'; } // strip off file extension
     filename = new char[strlen(argv[optind]) + 8];
     strcpy(filename, argv[optind]);
+    out_filename = std::string(filename) + ".s";
+  } else {
+    out_filename = filename;
   }
 
   //
@@ -106,7 +110,7 @@ int main(int argc, char* argv[]) {
   // Code Generation
   //
   if (filename) {
-    ofstream s(std::string(filename) + ".s");
+    ofstream s(out_filename);
     ast_root->cgen(s);
   } else {
     ast_root->cgen(cout);
