@@ -1,6 +1,11 @@
 .idea/
+test-output/
 build/
-grading/
+spim/
+
+test.out
+test.out.unfilt
+
 # Compiled Object files
 *.slo
 *.lo
@@ -29,5 +34,4 @@ grading/
 
 # Executables
 *.exe
-*.out
 *.app

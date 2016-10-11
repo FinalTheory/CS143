@@ -1,0 +1,6 @@
+#!/bin/sh
+
+MY_PATH="`dirname \"$0\"`"
+
+$MY_PATH/semant-firstfilter | $MY_PATH/semant-msgfilter
+

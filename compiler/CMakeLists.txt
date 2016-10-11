@@ -41,6 +41,17 @@ add_executable(
         ${BISON_Parser_OUTPUTS}
 )
 
+set(COOLC_TEST_DIRECTORY ${CMAKE_SOURCE_DIR}/tests/compiler)
+
+add_custom_target(
+        cooltest
+        sh ${COOLC_TEST_DIRECTORY}/run_all_tests.sh ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${COOLC_TEST_DIRECTORY}
+        DEPENDS coolc
+        COMMENT "Run tests for coolc compiler"
+        VERBATIM
+)
+
 # Note that on Linux or cygwin you should link to libfl.so, not libl.so
 # This is just for Mac OS
 target_link_libraries(coolc l)
