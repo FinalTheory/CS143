@@ -15,7 +15,6 @@
 #include "stringtab.h"
 
 
-#define MAXINT  100000000
 #define WORD_SIZE     4
 #define LOG_WORD_SIZE 2     // for logical shifts
 #define SAVED_REGS    3     // in callee we save $fp, $s0, $ra
@@ -119,3 +118,121 @@
 #define BLT      "\tblt\t"
 #define BGT      "\tbgt\t"
 
+extern int cgen_debug;
+
+extern char* gc_init_names[];
+
+extern char* gc_collect_names[];
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//  emit_* procedures
+//
+//  emit_X  writes code for operation "X" to the output stream.
+//  There is an emit_X for each opcode X, as well as emit_ functions
+//  for generating names according to the naming conventions (see emit.h)
+//  and calls to support functions defined in the trap handler.
+//
+//  Register names and addresses are passed as strings.  See `emit.h'
+//  for symbolic names you can use to refer to the strings.
+//
+//////////////////////////////////////////////////////////////////////////////
+
+
+class BoolConst;
+
+void emit_string_constant(ostream& str, char* s);
+
+void emit_load(char* dest_reg, int offset, char* source_reg, ostream& s);
+
+void emit_store(char* source_reg, int offset, char* dest_reg, ostream& s);
+
+void emit_load_imm(char* dest_reg, int val, ostream& s);
+
+void emit_load_address(char* dest_reg, char* address, ostream& s);
+
+void emit_partial_load_address(char* dest_reg, ostream& s);
+
+void emit_load_bool(char* dest, const BoolConst& b, ostream& s);
+
+void emit_load_string(char* dest, StringEntry* str, ostream& s);
+
+void emit_load_int(char* dest, IntEntry* i, ostream& s);
+
+void emit_move(char* dest_reg, char* source_reg, ostream& s);
+
+void emit_neg(char* dest, char* src1, ostream& s);
+
+void emit_add(char* dest, char* src1, char* src2, ostream& s);
+
+void emit_addu(char* dest, char* src1, char* src2, ostream& s);
+
+void emit_addiu(char* dest, char* src1, int imm, ostream& s);
+
+void emit_div(char* dest, char* src1, char* src2, ostream& s);
+
+void emit_mul(char* dest, char* src1, char* src2, ostream& s);
+
+void emit_sub(char* dest, char* src1, char* src2, ostream& s);
+
+void emit_sll(char* dest, char* src1, int num, ostream& s);
+
+void emit_jalr(char* dest, ostream& s);
+
+void emit_jal(char* address, ostream& s);
+
+void emit_return(ostream& s);
+
+void emit_gc_assign(ostream& s);
+
+void emit_disptable_ref(Symbol sym, ostream& s);
+
+void emit_init_ref(Symbol sym, ostream& s);
+
+void emit_label_ref(int l, ostream& s);
+
+void emit_protobj_ref(Symbol sym, ostream& s);
+
+void emit_method_ref(Symbol classname, Symbol methodname, ostream& s);
+
+void emit_label_def(int l, ostream& s);
+
+void emit_beqz(char* source, int label, ostream& s);
+
+void emit_beq(char* src1, char* src2, int label, ostream& s);
+
+void emit_bne(char* src1, char* src2, int label, ostream& s);
+
+void emit_bleq(char* src1, char* src2, int label, ostream& s);
+
+void emit_blt(char* src1, char* src2, int label, ostream& s);
+
+void emit_blti(char* src1, int imm, int label, ostream& s);
+
+void emit_bgti(char* src1, int imm, int label, ostream& s);
+
+void emit_branch(int l, ostream& s);
+
+//
+// Push a register on the stack. The stack grows towards smaller addresses.
+//
+void emit_push(char* reg, ostream& str);
+
+void emit_pop(char* reg, ostream& str);
+
+//
+// Fetch the integer value in an Int object.
+// Emits code to fetch the integer value of the Integer object pointed
+// to by register source into the register dest
+//
+void emit_fetch_int(char* dest, char* source, ostream& s);
+
+//
+// Emits code to store the integer value contained in register source
+// into the Integer object pointed to by dest.
+//
+void emit_store_int(char* source, char* dest, ostream& s);
+
+void emit_test_collector(ostream& s);
+
+void emit_gc_check(char* source, ostream& s);

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "cool-io.h"
 #include <unistd.h>
-#include "cgen_gc.h"
+#include "cgen.h"
 
 //
 // coolc provides a debugging switch for each phase of the compiler,

@@ -55,3 +55,8 @@ The following symbols are undefined:
 main
 ```
 and this could be safely ignored.
+
+
+### Reference
+
+- [[Cool Manual](http://theory.stanford.edu/~aiken/software/cool/cool-manual.pdf)] Cool language spec and implementation details.

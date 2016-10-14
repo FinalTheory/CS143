@@ -1,384 +1,35 @@
 #include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
 #include <typeinfo>
-#include "semant.h"
-#include "utilities.h"
+#include <map>
+#include <set>
+#include <vector>
+#include <iostream>
+#include "cool-tree.h"
 #include "symtab.h"
+#include "classtable.h"
+#include "globals.h"
+
+using std::fill;
+using std::pair;
+using std::vector;
+using std::make_pair;
+
 
 extern int semant_debug;
 extern char* curr_filename;
 
-//////////////////////////////////////////////////////////////////////
-//
-// Symbols
-//
-// For convenience, a large number of symbols are predefined here.
-// These symbols include the primitive type and method names, as well
-// as fixed names used by the runtime system.
-//
-//////////////////////////////////////////////////////////////////////
-static Symbol
-    arg,
-    arg2,
-    Bool,
-    concat,
-    cool_abort,
-    copy,
-    Int,
-    in_int,
-    in_string,
-    IO,
-    length,
-    Main,
-    main_meth,
-    No_class,
-    No_type,
-    Object,
-    out_int,
-    out_string,
-    prim_slot,
-    self,
-    SELF_TYPE,
-    Str,
-    str_field,
-    substr,
-    type_name,
-    val;
-
-//
-// Additional methods defined for the tree package
-// To make the god damn "protected" fields happy
-//
-
-//Symbol class__class::get_parent() {
-//  return this->parent;
-//}
-//
-//Symbol class__class::get_name() {
-//  return this->name;
-//}
-//
-//Features class__class::get_features() {
-//  return this->features;
-//}
-//
-//Formals method_class::get_formals() {
-//  return this->formals;
-//}
-//
-//Symbol method_class::get_return_type() {
-//  return this->return_type;
-//}
-//
-//Symbol method_class::get_name() {
-//  return this->name;
-//}
-//
-//Symbol attr_class::get_name() {
-//  return this->name;
-//}
-//
-//Symbol formal_class::get_name() {
-//  return this->name;
-//}
-//
-//Symbol formal_class::get_type_decl() {
-//  return this->type_decl;
-//}
-//
-//Symbol attr_class::get_type_decl() {
-//  return this->type_decl;
-//}
-//
-//Expression method_class::get_expr() {
-//  return this->expr;
-//}
-//
-//Expression attr_class::get_init_expr() {
-//  return this->init;
-//}
-//
-//Symbol branch_class::get_name() {
-//  return this->name;
-//}
-//
-//Symbol branch_class::get_type_decl() {
-//  return this->type_decl;
-//}
-//
-//Expression branch_class::get_expr() {
-//  return this->expr;
-//}
-
-//#ifdef NO_FLEX
-//// Make flex happy
-//// if no -fl is enabled
-//extern "C" int yywrap( void ) {
-//    return 1;
-//}
-//#endif
+ClassTable* classtable;
 
 //
 // Environments for Type Checking, stands for O, M, C
 //
 
-ClassTable* classtable;
 // Record all Object IDs using provided ID table
 SymbolTable<Symbol, Entry> ObjectIDs;
 // A global pointer to current class
 class__class* Current_Class;
 // Record methods of each class, key is class name
 map<Symbol, map<Symbol, pair<Formals, Symbol> > > Methods;
-
-//
-// Initializing the predefined symbols.
-//
-
-// Meaningful IDs are Bool, Int, String, Object, IO, No_type
-// Note that these five types are basic types, with a additional one for error handling
-// When assign values to the "type" field of Expression node, only these basic types are used
-static void initialize_constants(void) {
-  arg = idtable.add_string("arg");
-  arg2 = idtable.add_string("arg2");
-  Bool = idtable.add_string("Bool");
-  concat = idtable.add_string("concat");
-  cool_abort = idtable.add_string("abort");
-  copy = idtable.add_string("copy");
-  Int = idtable.add_string("Int");
-  in_int = idtable.add_string("in_int");
-  in_string = idtable.add_string("in_string");
-  IO = idtable.add_string("IO");
-  length = idtable.add_string("length");
-  Main = idtable.add_string("Main");
-  main_meth = idtable.add_string("main");
-  //   _no_class is a symbol that can't be the name of any
-  //   user-defined class.
-  No_class = idtable.add_string("_no_class");
-  No_type = idtable.add_string("_no_type");
-  Object = idtable.add_string("Object");
-  out_int = idtable.add_string("out_int");
-  out_string = idtable.add_string("out_string");
-  prim_slot = idtable.add_string("_prim_slot");
-  self = idtable.add_string("self");
-  SELF_TYPE = idtable.add_string("SELF_TYPE");
-  Str = idtable.add_string("String");
-  str_field = idtable.add_string("_str_field");
-  substr = idtable.add_string("substr");
-  type_name = idtable.add_string("type_name");
-  val = idtable.add_string("_val");
-}
-
-// This is the construct functions
-ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
-  this->classes = classes;
-  this->install_basic_classes();
-  this->check_inheritance();
-}
-
-void ClassTable::install_basic_classes() {
-
-  // The tree package uses these globals to annotate the classes built below.
-  // curr_lineno  = 0;
-  Symbol filename = stringtable.add_string("<basic class>");
-
-  // The following demonstrates how to create dummy parse trees to
-  // refer to basic Cool classes.  There's no need for method
-  // bodies -- these are already built into the runtime system.
-
-  // IMPORTANT: The results of the following expressions are
-  // stored in local variables.  You will want to do something
-  // with those variables at the end of this method to make this
-  // code meaningful.
-
-  //
-  // The Object class has no parent class. Its methods are
-  //        abort() : Object    aborts the program
-  //        type_name() : Str   returns a string representation of class name
-  //        copy() : SELF_TYPE  returns a copy of the object
-  //
-  // There is no need for method bodies in the basic classes---these
-  // are already built in to the runtime system.
-
-  Class_ Object_class =
-      class_(Object,
-             No_class,
-             append_Features(
-                 append_Features(
-                     single_Features(method(cool_abort, nil_Formals(), Object, no_expr())),
-                     single_Features(method(type_name, nil_Formals(), Str, no_expr()))),
-                 single_Features(method(copy, nil_Formals(), SELF_TYPE, no_expr()))),
-             filename);
-
-  //
-  // The IO class inherits from Object. Its methods are
-  //        out_string(Str) : SELF_TYPE       writes a string to the output
-  //        out_int(Int) : SELF_TYPE            "    an int    "  "     "
-  //        in_string() : Str                 reads a string from the input
-  //        in_int() : Int                      "   an int     "  "     "
-  //
-  Class_ IO_class =
-      class_(IO,
-             Object,
-             append_Features(
-                 append_Features(
-                     append_Features(
-                         single_Features(method(out_string, single_Formals(formal(arg, Str)),
-                                                SELF_TYPE, no_expr())),
-                         single_Features(method(out_int, single_Formals(formal(arg, Int)),
-                                                SELF_TYPE, no_expr()))),
-                     single_Features(method(in_string, nil_Formals(), Str, no_expr()))),
-                 single_Features(method(in_int, nil_Formals(), Int, no_expr()))),
-             filename);
-
-  //
-  // The Int class has no methods and only a single attribute, the
-  // "val" for the integer.
-  //
-  Class_ Int_class =
-      class_(Int,
-             Object,
-             single_Features(attr(val, prim_slot, no_expr())),
-             filename);
-
-  //
-  // Bool also has only the "val" slot.
-  //
-  Class_ Bool_class =
-      class_(Bool, Object, single_Features(attr(val, prim_slot, no_expr())), filename);
-
-  //
-  // The class Str has a number of slots and operations:
-  //       val                                  the length of the string
-  //       str_field                            the string itself
-  //       length() : Int                       returns length of the string
-  //       concat(arg: Str) : Str               performs string concatenation
-  //       substr(arg: Int, arg2: Int): Str     substring selection
-  //
-  Class_ Str_class =
-      class_(Str,
-             Object,
-             append_Features(
-                 append_Features(
-                     append_Features(
-                         append_Features(
-                             single_Features(attr(val, Int, no_expr())),
-                             single_Features(attr(str_field, prim_slot, no_expr()))),
-                         single_Features(method(length, nil_Formals(), Int, no_expr()))),
-                     single_Features(method(concat,
-                                            single_Formals(formal(arg, Str)),
-                                            Str,
-                                            no_expr()))),
-                 single_Features(method(substr,
-                                        append_Formals(single_Formals(formal(arg, Int)),
-                                                       single_Formals(formal(arg2, Int))),
-                                        Str,
-                                        no_expr()))),
-             filename);
-
-  // Check if basic classes are redefined
-  for (auto i = this->classes->first(); this->classes->more(i); i = this->classes->next(i)) {
-    class__class* cur_class = static_cast<class__class*>(this->classes->nth(i));
-    if (cur_class->name == SELF_TYPE
-        || cur_class->name == Object
-        || cur_class->name == Str
-        || cur_class->name == Bool
-        || cur_class->name == Int) {
-      this->semant_error(cur_class)
-          << "Fatal error: redefinition of basic class \"" << cur_class->name->get_string() << "\"." << endl;
-    }
-  }
-
-  // Finally, append all these classes to the classes list
-  this->classes = append_Classes(single_Classes(IO_class), this->classes);
-  this->classes = append_Classes(single_Classes(Str_class), this->classes);
-  this->classes = append_Classes(single_Classes(Bool_class), this->classes);
-  this->classes = append_Classes(single_Classes(Int_class), this->classes);
-  this->classes = append_Classes(single_Classes(Object_class), this->classes);
-  this->SpecialClass.insert(prim_slot);
-}
-
-void ClassTable::check_inheritance() {
-  this->AllSymbols.insert(Object);
-  this->Graph.SetRoot(Object);
-  // First, check if all classes are defined only once
-  // And then insert them into set and graph nodes
-  for (auto i = this->classes->first(); this->classes->more(i); i = this->classes->next(i)) {
-    class__class* cur_class = static_cast<class__class*>(this->classes->nth(i));
-    this->class_name2node[cur_class->name] = this->classes->nth(i);
-    if (cur_class->name == Object) { continue; }
-    if (this->AllSymbols.find(cur_class->name) == this->AllSymbols.end()) {
-      this->AllSymbols.insert(cur_class->name);
-      this->Graph.AddNode(cur_class->name);
-    } else {
-      // Report fatal error and return false
-      this->semant_error(cur_class) << "Fatal error: class name redefined." << endl;
-      return;
-    }
-  }
-  // Then Add Edges to the graph
-  for (auto i = this->classes->first(); this->classes->more(i); i = this->classes->next(i)) {
-    class__class* cur_class = static_cast<class__class*>(this->classes->nth(i));
-    if (cur_class->name == Object) { continue; }
-    // Notice to check if this class have parent
-    if (this->AllSymbols.find(cur_class->get_parent()) == this->AllSymbols.end()) {
-      this->semant_error(cur_class) << "Fatal error: unknown parent of class " <<
-                                    cur_class->name << endl;
-      return;
-    }
-    // Avoid self-loop
-    if (cur_class->get_parent() == cur_class->name) {
-      this->semant_error(cur_class) << "Fatal error: class inherited from itself." << endl;
-      return;
-    }
-    // Check if class could be inherited
-    if (cur_class->get_parent() == Str
-        || cur_class->get_parent() == Int
-        || cur_class->get_parent() == Bool
-        || cur_class->get_parent() == SELF_TYPE) {
-      this->semant_error(cur_class)
-          << "Fatal error: class \"" << cur_class->name->get_string()
-          << "\" cannot inherit from class \"" << cur_class->get_parent()->get_string()
-          << "\"." << endl;
-      return;
-    }
-    this->Graph.AddEdge(cur_class->get_parent(), cur_class->name);
-  }
-  if (!this->Graph.CheckCircle()) {
-    this->semant_error() << "Fatal error: class inheritance graph has a circle." << endl;
-    return;
-  }
-  this->Graph.AddSon(No_type);
-}
-
-////////////////////////////////////////////////////////////////////
-//
-// semant_error is an overloaded function for reporting errors
-// during semantic analysis.  There are three versions:
-//
-//    ostream& ClassTable::semant_error()                
-//
-//    ostream& ClassTable::semant_error(Class_ c)
-//       print line number and filename for `c'
-//
-//    ostream& ClassTable::semant_error(Symbol filename, tree_node *t)  
-//       print a line number and filename
-//
-///////////////////////////////////////////////////////////////////
-
-ostream& ClassTable::semant_error(Class_ c) {
-  return semant_error(static_cast<class__class*>(c)->get_filename(), c);
-}
-
-ostream& ClassTable::semant_error(Symbol filename, tree_node* t) {
-  error_stream << filename << ":" << t->get_line_number() << ": ";
-  return semant_error();
-}
-
-ostream& ClassTable::semant_error() {
-  semant_errors++;
-  return error_stream;
-}
 
 //
 // Set proper type information for each type of node
@@ -1049,29 +700,17 @@ void class__class::type_check() {
      to build mycoolc.
  */
 void program_class::semant() {
-  initialize_constants();
-
   /* ClassTable constructor may do some semantic analysis */
   classtable = new ClassTable(classes);
 
-  //
-  // Now finish first checking of classes, if there is error, just exit
-  //
-  if (classtable->errors()) {
-    cerr << "Compilation halted due to static semantic errors." << endl;
-    exit(1);
-  }
-
-  using std::set;
-  using std::map;
   // Record method names in each class
-  set<Symbol> hash_methods;
+  std::set<Symbol> hash_methods;
   // Record attr names in each class
-  set<Symbol> hash_attributes;
+  std::set<Symbol> hash_attributes;
   // Record formal names in each method
-  set<Symbol> hash_formals;
+  std::set<Symbol> hash_formals;
   // Record all attribute names in each class, map class name to vector of attributes
-  map<Symbol, vector<Symbol> > get_attr;
+  std::map<Symbol, vector<Symbol>> get_attr;
 
   //
   // First pass: collect info of all methods and attributes
@@ -1080,14 +719,14 @@ void program_class::semant() {
   // Record methods of each class, key is class name
   map<Symbol, vector<pair<Symbol, pair<Formals, Symbol> > > > class_methods;
 
-  for (auto i = classtable->getClasses()->first();
-       classtable->getClasses()->more(i);
-       i = classtable->getClasses()->next(i)) {
+  for (auto cls: classtable->getClasses()) {
     hash_methods.clear();
     hash_attributes.clear();
-    Current_Class = static_cast<class__class*>(classtable->getClasses()->nth(i));
+    Current_Class = cls;
     Features cur_features = Current_Class->features;
-    for (auto j = cur_features->first(); cur_features->more(j); j = cur_features->next(j)) {
+    for (auto j = cur_features->first();
+         cur_features->more(j);
+         j = cur_features->next(j)) {
       Feature cur_feature = cur_features->nth(j);
       if (typeid(*cur_feature) == typeid(method_class)) {
         method_class* cur_method = static_cast<method_class*>(cur_feature);
@@ -1152,10 +791,10 @@ void program_class::semant() {
   }
 
   // Record all attributes in classes from a inheritance tree leave to root
-  set<Symbol> all_attr;
+  std::set<Symbol> all_attr;
   // Record all methods in classes from a inheritance tree leave to root
   // This maps a method name to its formals and return type
-  map<Symbol, pair<Formals, Symbol> > all_methods;
+  std::map<Symbol, pair<Formals, Symbol> > all_methods;
   // Get all leave nodes according to inheritance tree, these are class names
   vector<Symbol>* all_leaves = classtable->get_leaves();
 
@@ -1248,12 +887,10 @@ void program_class::semant() {
   Main = NULL;
   main_meth = NULL;
   Methods.clear();
-  for (auto x = classtable->getClasses()->first();
-       classtable->getClasses()->more(x);
-       x = classtable->getClasses()->next(x)) {
+  for (auto cls: classtable->getClasses()) {
     all_methods.clear();
     // Set global current class
-    Current_Class = static_cast<class__class*>(classtable->getClasses()->nth(x));
+    Current_Class = cls;
     Symbol leave = Current_Class->name;
     while (true) {
       for (auto j = 0; j < class_methods[leave].size(); j++) {

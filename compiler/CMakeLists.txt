@@ -17,7 +17,10 @@ set(SOURCE_FILES
         handle_flags.cc
         stringtab.cc
         tree.cc
-        utilities.cc)
+        utilities.cc
+        classtable.cc
+        globals.cc
+        emit.cc)
 
 include_directories(.)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

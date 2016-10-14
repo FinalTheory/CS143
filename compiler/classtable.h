@@ -1,36 +1,53 @@
-#ifndef SEMANT_H_
-#define SEMANT_H_
+#ifndef PROJECT_CLASSTABLE_H
+#define PROJECT_CLASSTABLE_H
 
+#include <list>
 #include <vector>
-#include <algorithm>
-#include <map>
 #include <set>
-#include <assert.h>
-#include <iostream>
-#include <typeinfo>
+#include <map>
 #include "cool-tree.h"
-#include "stringtab.h"
 #include "symtab.h"
-#include "list.h"
 
-using std::map;
 using std::set;
-using std::fill;
-using std::pair;
+using std::map;
 using std::vector;
-using std::make_pair;
 
-#define TRUE 1
-#define FALSE 0
+class CgenNode;
+
+typedef CgenNode* CgenNodeP;
 
 class ClassTable;
 
-typedef ClassTable *ClassTableP;
+typedef ClassTable* ClassTableP;
 
-// This is a structure that may be used to contain the semantic
-// information such as the inheritance Nodes.  You may use it or not as
-// you like: it is only here to provide a container for the supplied
-// methods.
+enum Basicness {
+  Basic, NotBasic
+};
+
+
+class CgenNode : public class__class {
+ private:
+  CgenNodeP parentnd;                        // Parent of class
+  std::list<CgenNodeP> children;                  // Children of class
+  Basicness basic_status;                    // `Basic' if class is basic
+  // `NotBasic' otherwise
+
+ public:
+  CgenNode(Class_ c,
+           Basicness bstatus,
+           ClassTableP class_table);
+
+  void add_child(CgenNodeP child);
+
+  std::list<CgenNodeP>* get_children() { return &children; }
+
+  void set_parentnd(CgenNodeP p);
+
+  CgenNodeP get_parentnd() { return parentnd; }
+
+  int basic() { return (basic_status == Basic); }
+};
+
 
 template<typename Elem>
 class InheritanceGraph {
@@ -140,7 +157,7 @@ class InheritanceGraph {
     return false;
   };
 
-  vector<Elem> *get_leaves() {
+  vector<Elem>* get_leaves() {
     auto res = new vector<Elem>;
     for (auto i = 0; i < this->Nodes.size(); i++) {
       if (this->EdgeDown[i].size() == 0) { res->push_back(Nodes[i]); }
@@ -170,45 +187,97 @@ class InheritanceGraph {
   }
 
   vector<Elem> Nodes;
-  vector<vector<int> > EdgeDown;
+  vector<vector<int>> EdgeDown;
   vector<int> EdgeUp;
   map<Elem, int> pElem2Idx;
   set<Elem> SonOfAll;
 };
 
 
-class ClassTable {
- private:
-  int semant_errors;
-
-  void install_basic_classes();
-
-  void check_inheritance();
-
-  ostream &error_stream;
-  set<Symbol> AllSymbols;
-  InheritanceGraph<Symbol> Graph;
-  Classes classes;
-  // Map from class name to class node in AST
-  map<Symbol, Class_> class_name2node;
-  set<Symbol> SpecialClass;
-
+class ClassTable : public SymbolTable<Symbol, CgenNode> {
+  //
+  // Methods for code generation
+  //
  public:
   ClassTable(Classes);
 
+  ~ClassTable();
+
+  void code(ostream& s);
+
+  CgenNodeP root();
+
+ private:
+  std::list<CgenNodeP> classes_;
+
+  int stringclasstag;
+  int intclasstag;
+  int boolclasstag;
+
+  // The following methods emit code for
+  // constants and global declarations.
+
+  void code_global_data(ostream&);
+
+  void code_global_text(ostream&);
+
+  void code_bools(int, ostream&);
+
+  void code_select_gc(ostream&);
+
+  void code_constants(ostream&);
+
+  void code_class_nameTab(ostream&);
+
+  void code_class_objTab(ostream&);
+
+  void code_proto_object(ostream&);
+
+  void code_dispatch_table(ostream&);
+
+  void code_object_initializer(ostream&);
+
+  void code_class_methods(ostream&);
+
+// The following creates an inheritance graph from
+// a list of classes.  The graph is implemented as
+// a tree of `CgenNode', and class names are placed
+// in the base class symbol table.
+
+  void install_basic_classes();
+
+  void install_class(CgenNodeP nd);
+
+  // Check if basic classes are redefined
+  void check_classes(Classes cs);
+
+  void install_classes(Classes cs);
+
+  void build_inheritance_tree();
+
+  void set_relations(CgenNodeP nd);
+
+  void setup_class_tags();
+
+  int setup_class_tags_helper(CgenNodeP root, int& index);
+
+  //
+  // Methods for semant
+  //
+ public:
   int errors() { return semant_errors; }
 
-  ostream &semant_error();
+  ostream& semant_error();
 
-  ostream &semant_error(Class_ c);
+  ostream& semant_error(Class_ c);
 
-  ostream &semant_error(Symbol filename, tree_node *t);
+  ostream& semant_error(Symbol filename, tree_node* t);
 
   Symbol LCA(Symbol a, Symbol b) {
     return this->Graph.LCA(a, b);
   };
 
-  vector<Symbol> *get_leaves() {
+  vector<Symbol>* get_leaves() {
     return this->Graph.get_leaves();
   };
 
@@ -233,11 +302,20 @@ class ClassTable {
            this->SpecialClass.find(name) != this->SpecialClass.end();
   }
 
-  Classes getClasses() {
-    return this->classes;
+  std::list<CgenNodeP> getClasses() {
+    return classes_;
   }
+
+ private:
+  void check_inheritance();
+
+  ostream& error_stream;
+  int semant_errors;
+  set<Symbol> AllSymbols;
+  InheritanceGraph<Symbol> Graph;
+  // Map from class name to class node in AST
+  map<Symbol, Class_> class_name2node;
+  set<Symbol> SpecialClass;
 };
 
-
-#endif
-
+#endif //PROJECT_CLASSTABLE_H
