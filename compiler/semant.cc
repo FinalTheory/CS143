@@ -611,11 +611,7 @@ void class__class::type_check() {
       Feature cur_feature = cur_features->nth(i);
       if (typeid(*cur_feature) == typeid(attr_class)) {
         attr_class* cur_attr = static_cast<attr_class*>(cur_feature);
-        if (cur_attr->type_decl == SELF_TYPE) {
-          ObjectIDs.addid(cur_attr->name, cur_class->name);
-        } else {
-          ObjectIDs.addid(cur_attr->name, cur_attr->type_decl);
-        }
+        ObjectIDs.addid(cur_attr->name, cur_attr->type_decl);
       }
     }
     // Look up to its father
