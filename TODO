@@ -1,0 +1,2 @@
+1. Refactor usage of flex/bison.
+2. Use shared_ptr/unique_ptr instead of raw pointers.

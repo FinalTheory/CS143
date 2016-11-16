@@ -1,0 +1,4 @@
+#ifndef PROJECT_CGEN_MIPS_H
+#define PROJECT_CGEN_MIPS_H
+
+#endif //PROJECT_CGEN_MIPS_H

@@ -23,7 +23,7 @@ void byte_mode(ostream& str)
     }
 }
 
-void emit_string_constant(ostream& str, char* s)
+void emit_string_constant(ostream& str, const char* s)
 {
   ascii = 0;
 

@@ -25,7 +25,7 @@ ClassTable* classtable;
 //
 
 // Record all Object IDs using provided ID table
-SymbolTable<Symbol, Entry> ObjectIDs;
+SymbolTable<Symbol, Entry*> ObjectIDs;
 // A global pointer to current class
 class__class* Current_Class;
 // Record methods of each class, key is class name

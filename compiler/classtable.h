@@ -14,7 +14,7 @@ using std::vector;
 
 class CgenNode;
 
-typedef CgenNode* CgenNodeP;
+using CgenNodeP = CgenNode*;
 
 class ClassTable;
 
@@ -194,7 +194,7 @@ class InheritanceGraph {
 };
 
 
-class ClassTable : public SymbolTable<Symbol, CgenNode> {
+class ClassTable : public SymbolTable<Symbol, CgenNodeP> {
   //
   // Methods for code generation
   //

@@ -141,7 +141,7 @@ extern char* gc_collect_names[];
 
 class BoolConst;
 
-void emit_string_constant(ostream& str, char* s);
+void emit_string_constant(ostream& str, const char* s);
 
 void emit_load(char* dest_reg, int offset, char* source_reg, ostream& s);
 

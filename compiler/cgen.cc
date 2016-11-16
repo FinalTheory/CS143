@@ -47,12 +47,6 @@ extern char* curr_filename;
 
 extern ClassTable* classtable;
 
-//  BoolConst is a class that implements code generation for operations
-//  on the two booleans, which are given global names here.
-BoolConst falsebool(FALSE);
-BoolConst truebool(TRUE);
-
-
 //*********************************************************
 //
 // Define method for code generation
@@ -75,142 +69,6 @@ void program_class::cgen(ostream& os) {
   os << "\n# end of generated code\n";
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// coding strings, ints, and booleans
-//
-// Cool has three kinds of constants: strings, ints, and booleans.
-// This section defines code generation for each type.
-//
-// All string constants are listed in the global "stringtable" and have
-// type StringEntry.  StringEntry methods are defined both for String
-// constant definitions and references.
-//
-// All integer constants are listed in the global "inttable" and have
-// type IntEntry.  IntEntry methods are defined for Int
-// constant definitions and references.
-//
-// Since there are only two Bool values, there is no need for a table.
-// The two booleans are represented by instances of the class BoolConst,
-// which defines the definition and reference methods for Bools.
-//
-///////////////////////////////////////////////////////////////////////////////
-
-//
-// Strings
-//
-void StringEntry::code_ref(ostream& s) {
-  s << STRCONST_PREFIX << index;
-}
-
-//
-// Emit code for a constant String.
-// You should fill in the code naming the dispatch table.
-//
-
-void StringEntry::code_def(ostream& s, int stringclasstag) {
-  IntEntryP lensym = inttable.add_int(len);
-
-  // Add -1 eye catcher
-  s << WORD << "-1" << endl;
-
-  code_ref(s);
-  s << LABEL                                                              // label
-    << WORD << stringclasstag << endl                                     // tag
-    << WORD << (DEFAULT_OBJFIELDS + STRING_SLOTS + (len + 4) / 4) << endl // size
-    << WORD << Str->get_string() << DISPTAB_SUFFIX << endl;               // dispatch table
-
-  s << WORD;
-  lensym->code_ref(s);
-  s << endl;                                                              // string length
-  emit_string_constant(s, str);                                           // ascii string
-  s << ALIGN;                                                             // align to word
-}
-
-//
-// StrTable::code_string
-// Generate a string object definition for every string constant in the 
-// stringtable.
-//
-void StrTable::code_string_table(ostream& s, int stringclasstag) {
-  for (List<StringEntry>* l = tbl; l; l = l->tl()) {
-    l->hd()->code_def(s, stringclasstag);
-  }
-}
-
-//
-// Ints
-//
-void IntEntry::code_ref(ostream& s) {
-  s << INTCONST_PREFIX << index;
-}
-
-//
-// Emit code for a constant Integer.
-// You should fill in the code naming the dispatch table.
-//
-
-void IntEntry::code_def(ostream& s, int intclasstag) {
-  // Add -1 eye catcher
-  s << WORD << "-1" << endl;
-
-  code_ref(s);
-  s << LABEL                                               // label
-    << WORD << intclasstag << endl                         // class tag
-    << WORD << (DEFAULT_OBJFIELDS + INT_SLOTS) << endl     // object size
-    << WORD << Int->get_string() << DISPTAB_SUFFIX << endl // dispatch table
-    << WORD << str << endl;                                // integer value
-}
-
-
-//
-// IntTable::code_string_table
-// Generate an Int object definition for every Int constant in the
-// inttable.
-//
-void IntTable::code_string_table(ostream& s, int intclasstag) {
-  for (List<IntEntry>* l = tbl; l; l = l->tl()) {
-    l->hd()->code_def(s, intclasstag);
-  }
-}
-
-
-//
-// Bools
-//
-BoolConst::BoolConst(int i) : val(i) { assert(i == 0 || i == 1); }
-
-void BoolConst::code_ref(ostream& s) const {
-  s << BOOLCONST_PREFIX << val;
-}
-
-//
-// Emit code for a constant Bool.
-// You should fill in the code naming the dispatch table.
-//
-
-void BoolConst::code_def(ostream& s, int boolclasstag) {
-  // Add -1 eye catcher
-  s << WORD << "-1" << endl;
-
-  code_ref(s);
-  s << LABEL                                                // label
-    << WORD << boolclasstag << endl                         // class tag
-    << WORD << (DEFAULT_OBJFIELDS + BOOL_SLOTS) << endl     // object size
-    << WORD << Bool->get_string() << DISPTAB_SUFFIX << endl // dispatch table
-    << WORD << val << endl;                                 // value (0 or 1)
-}
-
-
-//******************************************************************
-//
-//   Fill in the following methods to produce code for the
-//   appropriate expression.  You may add or remove parameters
-//   as you wish, but if you do, remember to change the parameters
-//   of the declarations in `cool-tree.h'  Sample code for
-//   constant integers, strings, and booleans are provided.
-//
-//*****************************************************************
 
 void assign_class::code(ostream& s) {
   CODE_START;
@@ -355,7 +213,7 @@ int loop_class::temporaries() {
 
 void typcase_class::code(ostream& s) {
   CODE_START;
-  typedef branch_class *BranchType;
+  typedef branch_class* BranchType;
   vector<BranchType> patterns;
   vector<int> labels;
   auto label_end = Globals.new_label();
@@ -378,7 +236,7 @@ void typcase_class::code(ostream& s) {
   // We should check if it is void (NULL)
   emit_bne(ACC, ZERO, labels[0], s);
   emit_load_string(ACC, stringtable.lookup_string(curr_filename), s);
-  emit_load_imm(T1, 1, s);
+  emit_load_imm(T1, get_line_number(), s);
   emit_jal(CASE_ABORT2, s);
   for (auto i = 0; i < patterns.size(); i++) {
     auto cs = patterns[i];

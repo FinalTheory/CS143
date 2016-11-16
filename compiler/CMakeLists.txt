@@ -20,7 +20,9 @@ set(SOURCE_FILES
         utilities.cc
         classtable.cc
         globals.cc
-        emit.cc)
+        emit.cc
+        intermediate.cc
+        cgen_mips.cc)
 
 include_directories(.)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

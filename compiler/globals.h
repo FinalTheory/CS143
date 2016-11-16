@@ -56,16 +56,18 @@ extern Symbol
 
 class globals_impl {
  public:
-  typedef struct location_impl {
+  struct location_impl {
     char* reg;
     int offset;
 
     location_impl(char* _reg, int _offset)
         : reg(_reg), offset(_offset) {}
-  } * Location;
+  };
+
+  using Location = shared_ptr<location_impl>;
 
   static Location new_location(char* reg, int offset) {
-    return new location_impl(reg, offset);
+    return Location(new location_impl(reg, offset));
   }
 
   void set_current_class(Symbol class_name) {
@@ -112,7 +114,7 @@ class globals_impl {
 
  public:
   map<Symbol, int> classtag, subclasstag_max;
-  SymbolTable<Symbol, location_impl> env;
+  SymbolTable<Symbol, Location> env;
 
   globals_impl() {
     initialize_constants();

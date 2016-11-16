@@ -9,14 +9,26 @@
 #include "cool.h"
 #include "stringtab.h"
 
+namespace tac {
+class CodeSection;
+class TemporaryImpl;
+using Temporary = shared_ptr<TemporaryImpl>;
+}
+
+using tac::Temporary;
+using tac::CodeSection;
+
 #define yylineno curr_lineno;
+
 extern int yylineno;
 
 inline Boolean copy_Boolean(Boolean b) { return b; }
 
 inline void assert_Boolean(Boolean) {}
 
-inline void dump_Boolean(ostream& stream, int padding, Boolean b) { stream << pad(padding) << (int)b << "\n"; }
+inline void dump_Boolean(ostream& stream, int padding, Boolean b) {
+  stream << pad(padding) << (int)b << "\n";
+}
 
 void dump_Symbol(ostream& stream, int padding, Symbol b);
 
@@ -60,41 +72,41 @@ typedef list_node<Case> Cases_class;
 typedef Cases_class* Cases;
 
 #define Program_EXTRAS                          \
-virtual void semant() = 0;            \
-virtual void cgen(ostream&) = 0;    \
+virtual void semant() = 0;                      \
+virtual void cgen(ostream&) = 0;                \
 virtual void dump_with_types(ostream&, int) = 0;
 
 
 #define program_EXTRAS                          \
-void semant();                \
-void cgen(ostream&);          \
+void semant();                                  \
+void cgen(ostream&);                            \
 void dump_with_types(ostream&, int);
 
-#define Class__EXTRAS                   \
-virtual Symbol get_name() = 0;    \
-virtual Symbol get_parent() = 0;      \
-virtual Symbol get_filename() = 0;      \
-virtual void type_check() = 0; \
+#define Class__EXTRAS                           \
+virtual Symbol get_name() = 0;                  \
+virtual Symbol get_parent() = 0;                \
+virtual Symbol get_filename() = 0;              \
+virtual void type_check() = 0;                  \
 virtual void dump_with_types(ostream&,int) = 0;
 
 
-#define class__EXTRAS                                  \
-Symbol get_name()   { return name; }           \
-Symbol get_parent() { return parent; }             \
-Symbol get_filename() { return filename; }             \
+#define class__EXTRAS                           \
+Symbol get_name()   { return name; }            \
+Symbol get_parent() { return parent; }          \
+Symbol get_filename() { return filename; }      \
 void type_check(); \
 void dump_with_types(ostream&,int);
 
 
-#define Feature_EXTRAS                                        \
+#define Feature_EXTRAS                          \
 virtual void dump_with_types(ostream&,int) = 0;
 
 
-#define Feature_SHARED_EXTRAS                                       \
+#define Feature_SHARED_EXTRAS                   \
 void dump_with_types(ostream&,int);
 
 
-#define Formal_EXTRAS                              \
+#define Formal_EXTRAS                           \
 virtual void dump_with_types(ostream&,int) = 0;
 
 
@@ -106,25 +118,28 @@ void dump_with_types(ostream&,int);
 virtual void dump_with_types(ostream& ,int) = 0;
 
 
-#define branch_EXTRAS                                   \
+#define branch_EXTRAS                           \
 void dump_with_types(ostream& ,int);
 
 
-#define Expression_EXTRAS                    \
-Symbol type;                                 \
-Symbol get_type() { return type; }           \
-Expression set_type(Symbol s) { type = s; return this; } \
-virtual void type_check() = 0;   \
-virtual void code(ostream&) = 0; \
-virtual int temporaries() = 0;   \
-virtual void dump_with_types(ostream&,int) = 0;  \
-void dump_type(ostream&, int);               \
-Expression_class() { type = (Symbol) NULL; }
+#define Expression_EXTRAS                       \
+Symbol type;                                    \
+Symbol get_type() { return type; }              \
+virtual void type_check() = 0;                  \
+virtual void code(ostream&) = 0;                \
+virtual Temporary code(CodeSection& sec) = 0;   \
+virtual int temporaries() = 0;                  \
+virtual void dump_with_types(ostream&,int) = 0; \
+void dump_type(ostream&, int);                  \
+Expression_class() { type = (Symbol) NULL; }    \
+Expression set_type(Symbol s) { type = s; return this; }
 
-#define Expression_SHARED_EXTRAS           \
-void type_check();           \
-void code(ostream&);         \
-int temporaries();           \
+
+#define Expression_SHARED_EXTRAS                \
+void type_check();                              \
+void code(ostream&);                            \
+Temporary code(CodeSection& sec);               \
+int temporaries();                              \
 void dump_with_types(ostream&,int);
 
 
