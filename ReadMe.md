@@ -1,12 +1,5 @@
 # Cool Project [![Build Status](https://travis-ci.org/FinalTheory/Cool.svg?branch=master)](https://travis-ci.org/FinalTheory/Cool) [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/FinalTheory/Cool/blob/master/LICENSE)
 
-This project is out of my personal interest, its final goal is to build a self-made webserver, which uses a self-made TCP/IP stack, which works on a self-made operating system, which is running on a self-made CPU using simple "Y86" instruction set, built with an improved version of [Cool Language](https://en.wikipedia.org/wiki/Cool_(programming_language)), compiled by a self-made Cool compiler, and assembled by a self-made Y86 assembler.
-
-## CPU
-
-Still working on.
-
-
 ## Compiler
 
 Notice that current version of this compiler generates MIPS code only, supports for Y86 machine code is not implemented yet.
