@@ -1,5 +1,3 @@
-# Cool Project [![Build Status](https://travis-ci.org/FinalTheory/Cool.svg?branch=master)](https://travis-ci.org/FinalTheory/Cool) [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/FinalTheory/Cool/blob/master/LICENSE)
-
 ## Compiler
 
 Notice that current version of this compiler generates MIPS code only, supports for Y86 machine code is not implemented yet.
